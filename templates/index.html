@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Facebook Group Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">Facebook Group Manager</div>
+        <div class="subtitle">Kelola daftar grup & aturan</div>
+      </div>
+      <button class="btn btn-primary" onclick="openForm()">+ Add Group</button>
+    </div>
+
+    <div class="grid">
+      <!-- Daftar Grup -->
+      <div class="card">
+        <div class="toolbar">
+          <div class="search">
+            <input id="searchInput" placeholder="Search group..." onkeyup="filterGroups()" />
+            <span class="icon">🔍</span>
+          </div>
+          <span class="badge" id="totalGroups">Total: 0</span>
+        </div>
+
+        <div class="table-wrap">
+          <table id="groupsTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Group ID</th>
+                <th>Rules</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="groupsBody">
+              <!-- Data dari API akan muncul di sini -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Form Add/Edit -->
+      <div class="card">
+        <h3 id="formTitle">Add Group</h3>
+        <hr class="hr" />
+        <form class="form" id="groupForm" onsubmit="submitForm(event)">
+          <input type="hidden" id="groupId">
+
+          <label class="label">Name</label>
+          <input class="input" id="name" required>
+
+          <label class="label">Facebook Group ID</label>
+          <input class="input" id="fb_group_id" required>
+
+          <label class="label">Rules</label>
+          <textarea class="textarea" id="rules"></textarea>
+
+          <div class="flex items-center" style="gap:10px;">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-ghost" type="button" onclick="resetForm()">Reset</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const apiUrl = "/groups";
+
+    async function loadGroups(){
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      const body = document.getElementById("groupsBody");
+      const total = document.getElementById("totalGroups");
+      body.innerHTML = "";
+      data.forEach(g => {
+        body.innerHTML += `
+          <tr>
+            <td>${g.name}</td>
+            <td>${g.fb_group_id}</td>
+            <td>${g.rules || '-'}</td>
+            <td class="actions">
+              <button class="btn btn-sm btn-ghost" onclick="editGroup(${g.id}, '${g.name}', '${g.fb_group_id}', \`${g.rules||''}\`)">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+      total.textContent = "Total: " + data.length;
+    }
+
+    async function submitForm(e){
+      e.preventDefault();
+      const id = document.getElementById("groupId").value;
+      const payload = {
+        name: document.getElementById("name").value,
+        fb_group_id: document.getElementById("fb_group_id").value,
+        rules: document.getElementById("rules").value
+      };
+      const method = id ? "PUT" : "POST";
+      const url = id ? `${apiUrl}/${id}` : apiUrl;
+
+      await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      resetForm();
+      loadGroups();
+    }
+
+    function editGroup(id, name, fb_group_id, rules){
+      document.getElementById("formTitle").textContent = "Edit Group";
+      document.getElementById("groupId").value = id;
+      document.getElementById("name").value = name;
+      document.getElementById("fb_group_id").value = fb_group_id;
+      document.getElementById("rules").value = rules;
+    }
+
+    async function deleteGroup(id){
+      if(confirm("Yakin ingin menghapus grup ini?")){
+        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+        loadGroups();
+      }
+    }
+
+    function resetForm(){
+      document.getElementById("formTitle").textContent = "Add Group";
+      document.getElementById("groupId").value = "";
+      document.getElementById("groupForm").reset();
+    }
+
+    function filterGroups(){
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#groupsBody tr");
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        r.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+
+    loadGroups();
+  </script>
+</body>
+</html>
