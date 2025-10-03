@@ -67,19 +67,19 @@
               <input type="hidden" id="groupId">
 
               <label class="label">Icon</label>
-              <input type="file" name="icon_file" id="icon_file" accept="image/*">
+              <input type="file" name="icon_url" id="icon_url" accept="image/*">
 
               <label class="label">Name</label>
-              <input class="input" id="name" required>
+              <input class="input" name="name" id="name" required>
 
               <label class="label">Facebook Group ID</label>
-              <input class="input" id="fb_group_id" required>
+              <input class="input" name="fb_group_id" id="fb_group_id" required>
 
               <label class="label">Description</label>
-              <textarea class="textarea" id="description"></textarea>
+              <textarea class="textarea" name="description" id="description"></textarea>
 
               <label class="label">Rules</label>
-              <textarea class="textarea" id="rules"></textarea>
+              <textarea class="textarea" name="rules" id="rules"></textarea>
 
               <div class="flex items-center" style="gap:10px;">
                   <button class="btn btn-primary" type="submit">Save</button>
@@ -121,25 +121,39 @@
     async function submitForm(e){
       e.preventDefault();
       const id = document.getElementById("groupId").value;
-      const payload = {
-        icon_url: document.getElementById("icon_url").value,
-        name: document.getElementById("name").value,
-        fb_group_id: document.getElementById("fb_group_id").value,
-        description: document.getElementById("description").value,
-        rules: document.getElementById("rules").value
-      };
+
+      const formData = new FormData();
+      formData.append("name", document.getElementById("name").value);
+      formData.append("fb_group_id", document.getElementById("fb_group_id").value);
+      formData.append("description", document.getElementById("description").value);
+      formData.append("rules", document.getElementById("rules").value);
+
+      const icon_url = document.getElementById("icon_url").files[0]; // pakai file
+      if (icon_url) {
+        formData.append("icon_url", icon_url);
+      }
       
       const method = id ? "PUT" : "POST";
       const url = id ? `${apiUrl}/${id}` : apiUrl;
 
-      await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      resetForm();
-      loadGroups();
-    }
+       try {
+          const res = await fetch(url, { method, body: formData });
+          const data = await res.json();
+
+          if (!res.ok) {
+            // kalau gagal (contoh duplikat) → muncul pop-up
+            alert(data.error || "Id tidak boleh sama!");
+            return;
+          }
+
+          alert("Grup berhasil disimpan!"); // kalau sukses juga kasih notifikasi
+          resetForm();
+          loadGroups();
+        } catch (err) {
+          alert("Error koneksi ke server!");
+          console.error(err);
+        }
+      }
 
     function showDetail(icon_url, name, fb_group_id, description, rules){
         document.getElementById("detailIconUrl").src = icon_url;
@@ -162,6 +176,10 @@
         document.getElementById("fb_group_id").value = fb_group_id;
         document.getElementById("description").value = description;
         document.getElementById("rules").value = rules;
+
+        if (icon_url) {
+            document.getElementById("detailIconUrl").src = icon_url;
+        }
     }
 
     async function deleteGroup(id){
