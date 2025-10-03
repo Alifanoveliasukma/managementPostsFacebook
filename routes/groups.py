@@ -21,9 +21,12 @@ def get_groups():
 def add_group():
     data = request.json
     new_group = Group(
+        icon_url=data.get("icon_url", ""),
         name=data["name"],
         fb_group_id=data["fb_group_id"],
-        rules=data.get("rules", "")
+        description=data.get("description", ""),
+        rules=data.get("rules", ""),
+        icon_url=data.get("icon_url", "")
     )
     db.session.add(new_group)
     db.session.commit()
@@ -39,7 +42,9 @@ def edit_group(id):
     data = request.json
     group.name = data.get("name", group.name)
     group.fb_group_id = data.get("fb_group_id", group.fb_group_id)
+    group.description = data.get("description", group.description)
     group.rules = data.get("rules", group.rules)
+    group.icon_url = data.get("icon_url", group.icon_url) 
 
     db.session.commit()
     return jsonify({"message": "Group updated successfully"})
