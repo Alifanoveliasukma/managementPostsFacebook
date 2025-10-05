@@ -101,3 +101,17 @@ def delete_group(id):
     db.session.delete(group)
     db.session.commit()
     return jsonify({"message": "Group deleted successfully"})
+
+# ========================
+# KAITKAN GRUP DENGAN POST
+# ========================
+@groups_bp.route("/<int:id>", methods=["GET"]) # <-- PASTIKAN DECORATOR INI ADA
+def get_group_detail(id):
+    """Mengambil detail satu grup berdasarkan ID"""
+    group = Group.query.get_or_404(id)
+    return jsonify({
+        "id": group.id,
+        "name": group.name,
+        # Asumsi ada kolom description, sesuaikan dengan model Anda
+        "description": getattr(group, 'description', 'No description available'), 
+    })
