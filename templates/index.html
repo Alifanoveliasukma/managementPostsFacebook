@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Facebook Group Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">Facebook Group Manager</div>
+        <div class="subtitle">Kelola daftar grup & aturan</div>
+      </div>
+      <button class="btn btn-primary" onclick="openForm()">+ Add Group</button>
+    </div>
+
+    <div class="grid">
+      <!-- Daftar Grup -->
+      <div class="card">
+        <div class="toolbar">
+          <div class="search">
+            <input id="searchInput" placeholder="Search group..." onkeyup="filterGroups()" />
+            <span class="icon">🔍</span>
+          </div>
+          <span class="badge" id="totalGroups">Total: 0</span>
+        </div>
+
+        <div class="table-wrap">
+          <table id="groupsTable">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Group ID</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="groupsBody">
+              <!-- Data dari API akan muncul di sini -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Detail -->
+        <div class="modal" id="detailModal">
+            <div class="panel">
+                <p><b>Icon:</b> 
+                <img id="detailIconUrl">
+                <p><b>Name:</b> 
+                <h3 id="detailName"></h3>
+                <p><b>Group ID:</b> 
+                <div id="detailGroupId"></div></p>
+                <p><b>Description:</b></p>
+                <div id="detailDescription" class="alert"></div>
+                <p><b>Rules:</b></p>
+                <div id="detailRules" class="alert"></div>
+                <button class="btn btn-ghost" onclick="closeDetail()">Close</button>
+            </div>
+        </div>
+      <!-- Form Add/Edit -->
+        <div class="card">
+            <h3 id="formTitle">Add Group</h3>
+            <hr class="hr" />
+            <form class="form" id="groupForm" onsubmit="submitForm(event)" enctype="multipart/form-data">
+              <input type="hidden" id="groupId">
+
+              <label class="label">Icon</label>
+              <input type="file" name="icon_url" id="icon_url" accept="image/*">
+
+              <label class="label">Name</label>
+              <input class="input" name="name" id="name" required>
+
+              <label class="label">Facebook Group ID</label>
+              <input class="input" name="fb_group_id" id="fb_group_id" required>
+
+              <label class="label">Description</label>
+              <textarea class="textarea" name="description" id="description"></textarea>
+
+              <label class="label">Rules</label>
+              <textarea class="textarea" name="rules" id="rules"></textarea>
+
+              <div class="flex items-center" style="gap:10px;">
+                  <button class="btn btn-primary" type="submit">Save</button>
+                  <button class="btn btn-ghost" type="button" onclick="resetForm()">Reset</button>
+              </div>
+            </form>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    const apiUrl = "/groups";
+
+    async function loadGroups(){
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      const body = document.getElementById("groupsBody");
+      const total = document.getElementById("totalGroups");
+      body.innerHTML = "";
+      data.forEach(g => {
+        body.innerHTML += `
+          <tr>
+            <td>
+                <img src="${g.icon_url}" alt="icon" style="width:24px;height:24px;border-radius:50%;margin-right:6px;">
+            </td>
+            <td>${g.name}</td>
+            <td>${g.fb_group_id}</td>
+            <td class="actions">
+                <button class="btn btn-sm btn-ghost" onclick="showDetail(\`${g.name}\`,\`${g.fb_group_id}\`,\`${g.description || ''}\`,\`${g.rules || ''}\`, \`${g.icon_url || ''}\`)">Detail</button>
+                <button class="btn btn-sm btn-ghost" onclick="editGroup(${g.id}, '${g.name}', '${g.fb_group_id}', '${g.description}', \`${g.rules||''}\`)">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteGroup(${g.id})">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+      total.textContent = "Total: " + data.length;
+    }
+
+    async function submitForm(e){
+      e.preventDefault();
+      const id = document.getElementById("groupId").value;
+
+      const formData = new FormData();
+      formData.append("name", document.getElementById("name").value);
+      formData.append("fb_group_id", document.getElementById("fb_group_id").value);
+      formData.append("description", document.getElementById("description").value);
+      formData.append("rules", document.getElementById("rules").value);
+
+      const icon_url = document.getElementById("icon_url").files[0]; // pakai file
+      if (icon_url) {
+        formData.append("icon_url", icon_url);
+      }
+      
+      const method = id ? "PUT" : "POST";
+      const url = id ? `${apiUrl}/${id}` : apiUrl;
+
+       try {
+          const res = await fetch(url, { method, body: formData });
+          const data = await res.json();
+
+          if (!res.ok) {
+            // kalau gagal (contoh duplikat) → muncul pop-up
+            alert(data.error || "Id tidak boleh sama!");
+            return;
+          }
+
+          alert("Grup berhasil disimpan!"); // kalau sukses juga kasih notifikasi
+          resetForm();
+          loadGroups();
+        } catch (err) {
+          alert("Error koneksi ke server!");
+          console.error(err);
+        }
+      }
+
+    function showDetail(icon_url, name, fb_group_id, description, rules){
+        document.getElementById("detailIconUrl").src = icon_url;
+        document.getElementById("detailName").textContent = name;
+        document.getElementById("detailGroupId").textContent = fb_group_id;
+        document.getElementById("detailDescription").textContent = description || "-";
+        document.getElementById("detailRules").textContent = rules || "-";
+        document.getElementById("detailModal").classList.add("open");
+        }
+
+        function closeDetail(){
+        document.getElementById("detailModal").classList.remove("open");
+        }
+
+    function editGroup(id, icon_url, name, fb_group_id, description, rules){
+        document.getElementById("formTitle").textContent = "Edit Group";
+        document.getElementById("groupId").value = id;
+        document.getElementById("icon_url").value = icon_url;
+        document.getElementById("name").value = name;
+        document.getElementById("fb_group_id").value = fb_group_id;
+        document.getElementById("description").value = description;
+        document.getElementById("rules").value = rules;
+
+        if (icon_url) {
+            document.getElementById("detailIconUrl").src = icon_url;
+        }
+    }
+
+    async function deleteGroup(id){
+        if(confirm("Yakin ingin menghapus grup ini?")){
+            await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+            loadGroups();
+        }
+    }
+
+    function resetForm(){
+        document.getElementById("formTitle").textContent = "Add Group";
+        document.getElementById("groupId").value = "";
+        document.getElementById("groupForm").reset();
+    }
+
+    function filterGroups(){
+        const input = document.getElementById("searchInput").value.toLowerCase();
+        const rows = document.querySelectorAll("#groupsBody tr");
+        rows.forEach(r => {
+            const text = r.innerText.toLowerCase();
+            r.style.display = text.includes(input) ? "" : "none";
+        });
+    }
+
+    loadGroups();
+  </script>
+</body>
+</html>

@@ -63,6 +63,55 @@ body{
   .grid{ grid-template-columns: 1fr; }
 }
 
+/* Navbar / Menu */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #0e1a2d;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar .logo {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: var(--primary);
+}
+
+.sidebar .nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.sidebar .nav li {
+  margin-bottom: 12px;
+}
+
+.sidebar .nav a {
+  color: var(--text);
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.sidebar .nav a:hover {
+  background: #12203a;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+
 /* =========================
    Table
    ========================= */
@@ -204,3 +253,29 @@ tbody tr:hover{ background:#0c1628; }
    ========================= */
 a{ color:#86efac; text-decoration:none; }
 a:hover{ text-decoration:underline; }
+
+/* =========================
+   Linked Group Modal
+   ========================= */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.panel {
+  background: #1e1e2f;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  color: #fff;
+}
+

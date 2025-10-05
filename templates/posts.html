@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Post Management</h1>
+  <div class="grid">
+    <!-- Daftar Post -->
+    <div class="card">
+      <div class="toolbar">
+        <div class="search">
+          <input id="searchInput" placeholder="Search posts..." onkeyup="filterPosts()" />
+          <span class="icon">🔍</span>
+        </div>
+        <span class="badge" id="totalPosts">Total: 0</span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="postsTable">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Content</th>
+              <th>Groups</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="postsBody">
+            <!-- Data dari API akan muncul di sini -->
+          </tbody>
+        </table>
+        <div id="postDetail" style="margin-top:20px;"></div>
+      </div>
+    </div>
+
+  <!-- Modal Overlay -->
+<!-- Modal Kaitkan -->
+
+
+    <!-- Form Add/Edit -->
+<div class="card">
+  <h3 id="formTitle">Add Post</h3>
+  <hr class="hr" />
+  <form class="form" id="postForm" onsubmit="submitPost(event)">
+    <input type="hidden" id="postId">
+
+    <label class="label">Title</label>
+    <input class="input" name="title" id="title" required>
+
+    <label class="label">Content</label>
+    <textarea class="textarea" name="content" id="content" required></textarea>
+
+    <div class="flex items-center" style="gap:10px;">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <button class="btn btn-ghost" type="button" onclick="resetPostForm()">Reset</button>
+    </div>
+  </form>
+</div>
+</div>
+
+  <script src="{{ url_for('static', filename='js/posts.js') }}"></script>
+{% endblock %}
